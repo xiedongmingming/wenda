@@ -8,7 +8,6 @@ import json
 
 from yaml import load, dump
 
-
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
 except ImportError:
@@ -27,7 +26,7 @@ parser.add_argument('-t', type=str, dest="LLM_Type", help="选择使用的大模
 args = parser.parse_args()
 
 
-class dotdict(dict):
+class dotdict(dict):  # 这是给字典增强功能吗？
     #
     __getattr__ = dict.get
     __setattr__ = dict.__setitem__
@@ -51,6 +50,7 @@ red = "\033[1;31m"
 white = "\033[1;37m"
 
 
+########################################################################
 def error_helper(e, doc_url):
     #
     error_print(e)
@@ -73,6 +73,7 @@ def success_print(*s):
     print(white, end="")
 
 
+########################################################################
 wenda_Config = args.Config
 wenda_Port = str(args.Port)
 wenda_Logging = str(args.Logging)
@@ -82,7 +83,7 @@ print(args)
 
 try:
 
-    stream = open(wenda_Config, encoding='utf8')
+    stream = open(wenda_Config, encoding='utf8')  # 读取配置文件
 
 except:
 
@@ -90,18 +91,23 @@ except:
 
     stream = open('example.config.yml', encoding='utf8')
 
-settings = load(stream, Loader=Loader)
+settings = load(stream, Loader=Loader)  # YAML读取
 settings = dotdict(settings)
 
 stream.close()
 
+########################################################################
+# 命令行覆盖配置文件
 if wenda_Port != 'None':
+    #
     settings.port = wenda_Port
 
 if wenda_Logging != 'None':
+    #
     settings.logging = wenda_Logging
 
 if wenda_LLM_Type != 'None':
+    #
     settings.llm_type = wenda_LLM_Type
 
 try:
@@ -109,7 +115,7 @@ try:
 except:
     error_print("没有读取到LLM参数，可能是因为当前模型为API调用。")
 
-del settings.llm_models
+del settings.llm_models  # ？？？
 
 settings_str_toprint = dump(dict(settings))
 settings_str_toprint = re.sub(r':', ":" + "\033[1;32m", settings_str_toprint)
@@ -121,7 +127,7 @@ print("\033[1;37m")
 
 settings_str = json.dumps(settings)
 
-settings = json.loads(settings_str, object_hook=object_hook)
+settings = json.loads(settings_str, object_hook=object_hook)  # 最终是一个JSON对象
 
 
 class CounterLock:
@@ -171,7 +177,8 @@ def allowCROS():
     response.add_header('Access-Control-Allow-Headers', 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token')
 
 
-app = FastAPI( # 创建FASTAPI
+########################################################################
+app = FastAPI(  # 创建FASTAPI
     title="Wenda",
     description="Wenda API",
     version="1.0.0",

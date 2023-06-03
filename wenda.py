@@ -29,7 +29,6 @@ from plugins.common import app
 
 import logging
 
-
 logging.captureWarnings(True)
 
 lock = asyncio.Lock()
@@ -177,13 +176,14 @@ def pathinfo_adjust_wrapper(func):
 
 bottle.Bottle._handle = pathinfo_adjust_wrapper(
     bottle.Bottle._handle
-)  # 修复bottle在处理utf8 url时的bug
+)  # 修复BOTTLE在处理UTF8 URL时的BUG
 
 
 @hook('before_request')
 def validate():
     #
     REQUEST_METHOD = request.environ.get('REQUEST_METHOD')
+
     HTTP_ACCESS_CONTROL_REQUEST_METHOD = request.environ.get('HTTP_ACCESS_CONTROL_REQUEST_METHOD')
 
     if REQUEST_METHOD == 'OPTIONS' and HTTP_ACCESS_CONTROL_REQUEST_METHOD:
@@ -198,12 +198,13 @@ waiting_threads = 0
 def api_chat_now():
     #
     allowCROS()
+
     noCache()
 
     return {'queue_length': waiting_threads}
 
 
-@route('/find', method=("POST", "OPTIONS"))
+@route('/find', method=("POST", "OPTIONS"))  # 知识库搜索
 def api_find():
     #
     allowCROS()
@@ -281,8 +282,14 @@ def api_chat_box():
 
     try:
 
-        for response_text in LLM.chat_one(prompt, history_formatted, max_length, top_p, temperature,
-                                          zhishiku=use_zhishiku):
+        for response_text in LLM.chat_one(
+                prompt,
+                history_formatted,
+                max_length,
+                top_p,
+                temperature,
+                zhishiku=use_zhishiku
+        ):
             #
             if (response_text):
                 #
@@ -438,6 +445,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
         data = await websocket.receive_json()
 
+        ###################################################################################
         prompt = data.get('prompt')
 
         max_length = data.get('max_length')
@@ -468,8 +476,10 @@ async def websocket_endpoint(websocket: WebSocket):
 
         history_formatted = LLM.chat_init(history)
 
+        ###################################################################################
         response = ''
 
+        ###################################################################################
         IP = websocket.client.host
 
         # cost=0

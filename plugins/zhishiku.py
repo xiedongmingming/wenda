@@ -1,27 +1,46 @@
 from plugins.common import settings
 from plugins.common import error_print
 from plugins.common import allowCROS
+
 import json
+
 from bottle import route, response, request, static_file, hook
+
 zsk = []
+
 try:
+
     input_list = settings.library.strategy.split(" ")
+
 except:
-    error_print("读取知识库参数失败，这可能是新版本知识库配置方式变化导致的，请参照配置文件进行修改。知识库仍将继续加载，并使用默认参数："+"sogowx:3 bingsite:2 rtst:2 agents:0")
+
+    error_print("读取知识库参数失败，这可能是新版本知识库配置方式变化导致的，请参照配置文件进行修改。知识库仍将继续加载，并使用默认参数：" + "sogowx:3 bingsite:2 rtst:2 agents:0")
+
     input_list = "sogowx:3 bingsite:2 rtst:2 agents:0".split(" ")
+
 for item in input_list:
+
     item = item.split(":")
+
     from importlib import import_module
-    zhishiku = import_module('plugins.zhishiku_'+item[0])
+
+    zhishiku = import_module('plugins.zhishiku_' + item[0])
+
     if zhishiku is None:
+        #
         error_print("载入知识库失败", item[0])
+
     zsk.append({'zsk': zhishiku, "count": int(item[1])})
 
 
 def find(s, step=0):
+    #
     result = []
+
     for item in zsk:
+        #
         result += item['zsk'].find(s, step)[:item['count']]
+
     return result[:int(settings.library.count)]
 
 
@@ -34,57 +53,86 @@ def find(s, step=0):
 # 知识库最大抽取条目的数量，paraJson.maxItmes
 @route('/find_dynamic', method=("POST", "OPTIONS"))
 def api_find_dynamic():
+    #
     allowCROS()
+
     data = request.json
+
     if not data:
+        #
         return '0'
+
     prompt = data.get('prompt')
+
     step = data.get('step')
+
     paraJson = data.get('paraJson')  # 转成json对象
 
     if step is None:
+        #
         step = int(settings.library.step)
 
     if paraJson is None:
+        #
         paraJson = {
-            'libraryStategy': "sogowx:2 bingsite:3 fess:2 rtst:3 bing:2", 'maxItmes': 10}
+            'libraryStategy': "sogowx:2 bingsite:3 fess:2 rtst:3 bing:2", 'maxItmes': 10
+        }
 
     print(type(paraJson))
     print(paraJson)
 
     return json.dumps(find_dynamic(prompt, int(step), paraJson))
 
-def find_dynamic(s,step = 0,paraJson = {'libraryStategy':"bing:2 bingsite:3 fess:2 rtst:3:default sogowx:2",'maxItmes':10}):
-    zsk=[]
-    rtst_on=False
-    rtst_name='default'
+
+def find_dynamic(s, step=0,
+                 paraJson={'libraryStategy': "bing:2 bingsite:3 fess:2 rtst:3:default sogowx:2", 'maxItmes': 10}):
+    zsk = []
+
+    rtst_on = False
+
+    rtst_name = 'default'
+
     input_list = paraJson['libraryStategy'].split(" ")
-    
+
     # print('from dynamic:')
-    
+
     for item in input_list:
-        item=item.split(":")
-        rtst_on=False
+
+        item = item.split(":")
+
+        rtst_on = False
+
         from importlib import import_module
-        zhishiku = import_module('plugins.zhishiku_'+item[0])
+
+        zhishiku = import_module('plugins.zhishiku_' + item[0])
+
         if zhishiku is None:
-            error_print("载入知识库失败",item[0])
+            #
+            error_print("载入知识库失败", item[0])
+
         if len(item) >= 3:
+
             if item[0] == 'rtst' and item[2] != None:
-               rtst_name=item[2]
-               rtst_on=True
+                #
+                rtst_name = item[2]
+
+                rtst_on = True
+
             #    print(rtst_name)
             # else:
             #     print('rtst 不存在')
 
-        zsk.append({'zsk':zhishiku,"count":int(item[1]),'rtst_state':rtst_on})
+        zsk.append({'zsk': zhishiku, "count": int(item[1]), 'rtst_state': rtst_on})
 
-    result=[]
+    result = []
 
     for item in zsk:
+        #
         # print(item)
-        if(item['rtst_state']):
-            result+=item['zsk'].find(s,step,rtst_name)[:item['count']]
+        #
+        if (item['rtst_state']):
+            result += item['zsk'].find(s, step, rtst_name)[:item['count']]
         else:
-            result+=item['zsk'].find(s,step)[:item['count']]
+            result += item['zsk'].find(s, step)[:item['count']]
+
     return result[:paraJson["maxItmes"]]
