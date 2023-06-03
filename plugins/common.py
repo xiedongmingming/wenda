@@ -16,7 +16,7 @@ except ImportError:
 
 import argparse
 
-
+# 全局配置
 parser = argparse.ArgumentParser(description='Wenda config')
 
 parser.add_argument('-c', type=str, dest="Config", default='config.yml', help="配置文件")
@@ -171,7 +171,7 @@ def allowCROS():
     response.add_header('Access-Control-Allow-Headers', 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token')
 
 
-app = FastAPI(
+app = FastAPI( # 创建FASTAPI
     title="Wenda",
     description="Wenda API",
     version="1.0.0",
