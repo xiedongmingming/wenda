@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         New Userscript
+// @name         画图
 // @namespace    http://tampermonkey.net/
 // @version      0.1
-// @description  try to take over the world!
+// @description  调用sd api画图
 // @author       You
 // @match        http://127.0.0.1:17860/
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=0.1
@@ -10,14 +10,14 @@
 // ==/UserScript==
 
 
-功能.push({
-    名称: "画图",
-    问题: async () => {
+func.push({
+    name: "画图",
+    question: async () => {
         lsdh(false)
         zsk(false)
 
-        add_conversation("user", app.问题)
-        Q = await send("使用英语简要描述以下场景：" + app.问题, app.问题, false)
+        add_conversation("user", app.question)
+        Q = await send("使用英语简要描述以下场景：" + app.question, app.question, false)
         app.loading = true
         alert("提示词：" + Q)
         response = await fetch("/api/sd_agent", {
@@ -43,14 +43,14 @@
         save_history()
     },
 })
-功能.push({
-    名称: "draw use SD",
-    问题: async () => {
+func.push({
+    name: "draw use SD",
+    question: async () => {
         lsdh(false)
         zsk(false)
 
-        add_conversation("user", app.问题)
-        Q = app.问题
+        add_conversation("user", app.question)
+        Q = app.question
         app.loading = true
         response = await fetch("/api/sd_agent", {
             // signal: signal,

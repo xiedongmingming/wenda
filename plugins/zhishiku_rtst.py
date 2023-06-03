@@ -27,6 +27,8 @@ def process_strings(A, C, B):
     else:
         return A + B
     
+def get_title_by_doc(doc):
+    return re.sub('【.+】', '', doc.metadata['source'])
 def get_doc(id,score,step,memory_name):
     doc = get_doc_by_id(id,memory_name)
     final_content=doc.page_content
@@ -35,19 +37,19 @@ def get_doc(id,score,step,memory_name):
         for i in range(1, step+1):
             try:
                 doc_before=get_doc_by_id(id-i,memory_name)
-                if doc_before.metadata['source']==doc.metadata['source']:
+                if get_title_by_doc(doc_before)==get_title_by_doc(doc):
                     final_content=process_strings(doc_before.page_content,divider,final_content)
                     # print("上文分数：",score,doc.page_content)
             except:
                 pass
             try:
                 doc_after=get_doc_by_id(id+i,memory_name)
-                if doc_after.metadata['source']==doc.metadata['source']:
+                if get_title_by_doc(doc_after)==get_title_by_doc(doc):
                     final_content=process_strings(final_content,divider,doc_after.page_content)
             except:
                 pass
     if doc.metadata['source'].endswith(".pdf") or doc.metadata['source'].endswith(".txt"):
-        title=f"[{doc.metadata['source']}](/api/read_news/{doc.metadata['source']})"
+        title=f"[{doc.metadata['source']}](/txt/{doc.metadata['source']})"
     else:
         title=doc.metadata['source']
     return {'title': title,'content':re.sub(r'\n+', "\n", final_content),"score":int(score)}
@@ -71,7 +73,7 @@ try:
     embeddings.client = sentence_transformers.SentenceTransformer(cunnrent_setting.model_path,
                                                                             device=cunnrent_setting.device)
 except Exception  as e:
-    error_helper("embedding加载失败，请下载相应模型",r"https://github.com/l15y/wenda#st%E6%A8%A1%E5%BC%8F")
+    error_helper("embedding加载失败，请下载语义知识库计算模型",r"https://github.com/l15y/wenda#st%E6%A8%A1%E5%BC%8F")
     raise e
 vectorstores={}
 def get_vectorstore(memory_name):
@@ -90,7 +92,7 @@ from langchain.docstore.document import Document
 from langchain.text_splitter import CharacterTextSplitter
 from bottle import route, response, request, static_file, hook
 import bottle
-@route('/api/upload_rtst_zhishiku', method=("POST","OPTIONS"))
+@route('/upload_rtst_zhishiku', method=("POST","OPTIONS"))
 def upload_zhishiku():
     allowCROS()
     try:
@@ -118,7 +120,7 @@ def upload_zhishiku():
         return '成功'
     except Exception as e:
         return str(e)
-@route('/api/save_rtst_zhishiku', method=("POST","OPTIONS"))
+@route('/save_rtst_zhishiku', method=("POST","OPTIONS"))
 def save_zhishiku():
     allowCROS()
     try:
@@ -129,18 +131,31 @@ def save_zhishiku():
     except Exception as e:
         return str(e)
 import json
-@route('/api/find_rtst_in_memory', method=("POST","OPTIONS"))
+@route('/find_rtst_in_memory', method=("POST","OPTIONS"))
 def api_find():
     allowCROS()
-    data = request.json
-    prompt = data.get('prompt')
-    step = data.get('step')
-    memory_name=data.get("memory_name")
-    if step is None:
-        step = int(settings.library.step)
-    return json.dumps(find(prompt,int(step),memory_name))
+    try:
+        data = request.json
+        prompt = data.get('prompt')
+        step = data.get('step')
+        memory_name=data.get("memory_name")
+        if step is None:
+            step = int(settings.library.step)
+        return json.dumps(find(prompt,int(step),memory_name))
+    except Exception as e:
+        return str(e)
+    
+@route('/del_rtst_in_memory', method=("POST","OPTIONS"))
+def api_find():
+    allowCROS()
+    try:
+        data = request.json
+        memory_name=data.get("memory_name")
+        del vectorstores[memory_name]
+    except Exception as e:
+        return str(e)
 
-@route('/api/save_news', method=("POST","OPTIONS"))
+@route('/save_news', method=("POST","OPTIONS"))
 def save_news():
     allowCROS()
     try:
@@ -156,8 +171,3 @@ def save_news():
         return 'success'
     except Exception as e:
         return(e)
-
-@route('/api/read_news/:path', method=("GET","OPTIONS"))
-def read_news(path=""):
-    allowCROS()
-    return static_file(path, root="txt/")

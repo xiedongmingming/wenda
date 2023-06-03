@@ -11,10 +11,19 @@ headers = {
 proxies = {"http": None,"https": None,}
 
 
-@route('/api/sd_agent', method=("POST","OPTIONS"))
+@route('/sd_agent', method=("POST","OPTIONS"))
 def api_find():
     allowCROS()
     url = "http://127.0.0.1:786"
     response = requests.post(url=f'{url}/sdapi/v1/txt2img', json=request.json, proxies=proxies)
     r = response.text
+    return r
+
+@route('/webhook/event', method=("POST"))#webhook
+def api_find():
+    print(request.json)
+    url = "http://127.0.0.1:3000"
+    response = requests.post(url=f'{url}/webhook/event', json=request.json, proxies=proxies)
+    r = response.text
+    print(r)
     return r

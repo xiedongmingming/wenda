@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         New Userscript
+// @name         写论文
 // @namespace    http://tampermonkey.net/
 // @version      0.1
-// @description  try to take over the world!
+// @description  根据题目或提纲写论文
 // @author       You
 // @match        http://127.0.0.1:17860/
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=0.1
@@ -38,12 +38,12 @@ function find_RomanNumerals(str) {
     return number
 }
 
-功能.push({
-    名称: "根据标题写论文",
-    描述: "根据主题撰写内容翔实、有信服力的论文",
-    问题: async () => {
+func.push({
+    name: "根据标题写论文",
+    description: "根据主题撰写内容翔实、有信服力的论文",
+    question: async () => {
         lsdh(false)
-        Q = app.问题
+        Q = app.question
         app.max_length = 4096
         app.chat = []
         resp = (await send("根据以下主题，写一篇高度凝练且全面的论文提纲：" + Q, Q))
@@ -73,11 +73,11 @@ function find_RomanNumerals(str) {
 
     },
 })
-功能.push({
-    名称: "根据提纲写论文",
-    描述: "根据主题撰写内容翔实、有信服力的论文",
-    问题: async () => {
-        title = app.问题
+func.push({
+    name: "根据提纲写论文",
+    description: "根据主题撰写内容翔实、有信服力的论文",
+    question: async () => {
+        title = app.question
         app.max_length = 4096
         app.chat = []
         resp =title.split("\n")
@@ -98,7 +98,7 @@ function find_RomanNumerals(str) {
             }
         }
         content = content.join("\n\n")
-        add_conversation("user",  Q )
+        add_conversation("user",  title )
         add_conversation("AI",  content )
         console.log(content)
 
