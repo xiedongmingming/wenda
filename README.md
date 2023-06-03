@@ -1,49 +1,48 @@
 # 闻达：一个大规模语言模型调用平台
-针对特定环境的内容生成是LLM使用中的一项重要应用，实现这一目的，主要有`全量微调`、`lora微调`、和本项目方法。但个人没有做全量微调的，lora微调只能牺牲基础能力换单任务效果（用6B模型lora调出来的单任务效果，专门设计一个0.5B模型也能实现，且推理成本更低）。
+本项目设计目标为实现针对特定环境的高效内容生成，同时考虑个人和中小企业的计算资源局限性，以及知识安全和私密性问题。为达目标，平台化集成了以下能力：
 
-而本项目采用知识库+auto脚本的形式为LLM提高生成能力，充分考虑个人和中小企业的资源问题，以及国内大背景下知识安全和私密性问题,实现使小模型获得近似于大模型的生成能力。
-1. 目前支持模型：`chatGLM-6B`、`chatRWKV`、`chatYuan`、`llama系列`以及`openaiapi`和`chatglm130b api`，初步支持`moss`。
-2. 使用知识库扩展模型所知信息，使用auto提高模型生成质量和复杂问题解决能力
-3. 支持`chatGLM-6B`、`chatRWKV`、`llama系列`流式输出和输出过程中中断
-4. 自动保存对话历史至浏览器（多用户同时使用不会冲突，`chatRWKV`历史消息实现方式需使用string）
-5. 对话历史管理（删除单条、清空）
-6. 支持局域网、内网部署和多用户同时使用。
+1. 知识库：支持对接[本地离线向量库](#rtst模式)、[本地搜索引擎](#fess模式)、在线搜索引擎等。
+2. 多种大语言模型：目前支持离线部署模型有`chatGLM-6B`、`chatRWKV`、`llama系列`以及`moss`，在线API访问`openai api`和`chatGLM-130b api`。
+3. Auto脚本：通过开发插件形式的JavaScript脚本，为平台附件功能，实现包括但不限于自定义对话流程、访问外部API、在线切换LoRA模型。
+4. 其他实用化所需能力：对话历史管理、内网部署、多用户同时使用等。
 
 
-交流QQ群：LLM使用和综合讨论群162451840；知识库使用讨论群241773574(满)；Auto开发交流群744842245；
+交流QQ群：LLM使用和综合讨论群`162451840`；知识库使用讨论群`241773574(已满，请去QQ频道讨论)`；Auto开发交流群`744842245`；
 
-[discussions](https://github.com/l15y/wenda/discussions)
 [QQ频道](https://pd.qq.com/s/ej03plxks)
 
 <!--ts-->
-* [闻达：一个大规模语言模型调用平台](#闻达一个大规模语言模型调用平台)
-   * [安装部署](#安装部署)
-      * [各版本功能及安装说明](#各版本功能及安装说明)
-      * [懒人包](#懒人包)
-      * [自行安装](#自行安装)
-         * [1.安装库](#1安装库)
-         * [2.下载模型](#2下载模型)
-         * [3.参数设置](#3参数设置)
-   * [Auto](#auto)
-      * [Auto 开发函数列表](#auto-开发函数列表)
-      * [Auto 开发涉及代码段](#auto-开发涉及代码段)
-      * [部分内置 Auto 使用说明](#部分内置-auto-使用说明)
-   * [知识库](#知识库)
-      * [rtst模式](#rtst模式)
-      * [fess模式](#fess模式)
-      * [知识库调试](#知识库调试)
-   * [模型配置](#模型配置)
-      * [chatGLM-6B](#chatglm-6b)
-      * [chatRWKV](#chatrwkv)
-         * [torch](#torch)
-         * [cpp](#cpp)
-         * [文字冒险游戏](#文字冒险游戏)
-      * [llama](#llama)
-* [基于本项目的二次开发](#基于本项目的二次开发)
-   * [<a href="https://github.com/AlanLee1996/wenda-webui">wenda-webui</a>](#wenda-webui)
+- [闻达：一个大规模语言模型调用平台](#闻达一个大规模语言模型调用平台)
+  - [安装部署](#安装部署)
+    - [各版本功能及安装说明](#各版本功能及安装说明)
+    - [懒人包](#懒人包)
+      - [百度云](#百度云)
+      - [夸克](#夸克)
+      - [介绍](#介绍)
+    - [自行安装](#自行安装)
+      - [1.安装库](#1安装库)
+      - [2.下载模型](#2下载模型)
+      - [3.参数设置](#3参数设置)
+  - [Auto](#auto)
+    - [Auto 开发函数列表](#auto-开发函数列表)
+    - [Auto 开发涉及代码段](#auto-开发涉及代码段)
+    - [部分内置 Auto 使用说明](#部分内置-auto-使用说明)
+  - [知识库](#知识库)
+    - [rtst模式](#rtst模式)
+    - [fess模式](#fess模式)
+    - [知识库调试](#知识库调试)
+    - [清洗知识库文件](#清洗知识库文件)
+  - [模型配置](#模型配置)
+    - [chatGLM-6B](#chatglm-6b)
+    - [chatRWKV](#chatrwkv)
+      - [torch](#torch)
+      - [cpp](#cpp)
+    - [llama](#llama)
+- [基于本项目的二次开发](#基于本项目的二次开发)
+  - [wenda-webui](#wenda-webui)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: runner, at: Fri May 12 02:15:21 UTC 2023 -->
+<!-- Added by: runner, at: Sun May 14 12:45:00 UTC 2023 -->
 
 <!--te-->
 ![](imgs/setting.png)
@@ -65,10 +64,14 @@
 | [llama](#llama).cpp                     | 不支持                                                                  | 支持   |
 | moss                                    | 不支持                                                                  | 支持   |
 ### 懒人包
+#### 百度云
 链接：https://pan.baidu.com/s/105nOsldGt5mEPoT2np1ZoA?pwd=lyqz 
 
 提取码：lyqz
-
+#### 夸克
+链接：https://pan.quark.cn/s/c4cb08de666e
+提取码：4b4R
+#### 介绍
 默认参数在6G显存设备上运行良好。最新版懒人版已集成一键更新功能，建议使用前更新。
 
 使用步骤（以glm6b模型为例）：
@@ -94,24 +97,24 @@ PS:一定要看[example.config.yml](https://github.com/l15y/wenda/blob/main/exam
 auto功能通过JavaScript脚本实现，使用油猴脚本或直接放到`autos`目录的方式注入至程序，为闻达附加各种自动化功能。
 
 ### Auto 开发函数列表
-| 函数 （皆为异步调用）           | 功能                                    | 说明                                                                |
-| ------------------------------- | --------------------------------------- | ------------------------------------------------------------------- |
-| send(s,keyword = "",show=true) | 发送信息至LLM，返回字符串为模型返回值 | s：输入模型文本；keyword:聊天界面显示文本；show：是否在聊天界面显示 |
+| 函数 （皆为异步调用）           | 功能                                  | 说明                                                                |
+| ------------------------------- | ------------------------------------- | ------------------------------------------------------------------- |
+| send(s,keyword = "",show=true)  | 发送信息至LLM，返回字符串为模型返回值 | s：输入模型文本；keyword:聊天界面显示文本；show：是否在聊天界面显示 |
 | add_conversation(role, content) | 添加会话信息                          | role：'AI'、'user'；content：字符串                                 |
-| save_history()                 | 保存会话历史                          | 对话完成后会自动保存，但手动添加的对话须手动保存                    |
-| find(s, step = 1)              | 从知识库查找                          | 返回json数组                                                        |
-| find_dynamic(s,step=1,paraJson) | 从动态知识库查找；参考闻达笔记Auto      | paraJson：{libraryStategy:"sogowx:3",maxItmes:2}                    |
-| zsk(b=true)                    | 开关知识库                            |                                                                     |
-| lsdh(b=true)                   | 开关历史对话                          | 打开知识库时应关闭历史                                              |
-| speak(s)                       | 使用TTS引擎朗读文本。                   | 调用系统引擎                                                        |
-| copy(s)                        | 使用浏览器`clipboard-write`复制文本   | 需要相关权限                                                        |
+| save_history()                  | 保存会话历史                          | 对话完成后会自动保存，但手动添加的对话须手动保存                    |
+| find(s, step = 1)               | 从知识库查找                          | 返回json数组                                                        |
+| find_dynamic(s,step=1,paraJson) | 从动态知识库查找；参考闻达笔记Auto    | paraJson：{libraryStategy:"sogowx:3",maxItmes:2}                    |
+| zsk(b=true)                     | 开关知识库                            |                                                                     |
+| lsdh(b=true)                    | 开关历史对话                          | 打开知识库时应关闭历史                                              |
+| speak(s)                        | 使用TTS引擎朗读文本。                 | 调用系统引擎                                                        |
+| copy(s)                         | 使用浏览器`clipboard-write`复制文本   | 需要相关权限                                                        |
 ### Auto 开发涉及代码段
 在左侧功能栏添加内容：
 ```
-功能.push({
-    名称: "名称",
-    问题: async () => {
-        let answer=await send(app.问题)
+func.push({
+    name: "名称",
+    question: async () => {
+        let answer=await send(app.question)
         alert(answer)
     },
 })
@@ -203,6 +206,7 @@ try {
 ![](imgs/auto1.jpg)
 ![](imgs/auto2.png)
 ![](imgs/auto3.png)
+![](imgs/auto4.png)
 
 [auto例程](https://github.com/l15y/wenda/tree/main/autos)
 
@@ -241,6 +245,14 @@ Linux直接使用wenda环境执行 `python plugins/gen_data_st.py`
 ![](imgs/zsk-glm.png)
 ![](imgs/zsk-rwkv.png)
 
+### 清洗知识库文件
+
+安装 [utool](https://u.tools/) 工具，uTools 是一个极简、插件化的桌面软件，可以安装各种使用 nodejs 开发的插件。您可以使用插件对闻达的知识库进行数据清洗。请自行安装以下推荐插件：
+
+- 插件“解散文件夹”，用于将子目录的文件移动到根目录，并删除所有子目录。
+- 插件“重复文件查找”，用于删除目录中的重复文件，原理是对比文件 md5。
+- 插件“文件批量重命名”，用于使用正则匹配和修改文件名，并将分类后的文件名进行知识库的分区操作。
+
 ##  模型配置
 ### chatGLM-6B
 运行：`run_GLM6B.bat`。
@@ -256,8 +268,6 @@ Linux直接使用wenda环境执行 `python plugins/gen_data_st.py`
 #### torch
 可使用内置脚本对模型量化，运行：`cov_torch_rwkv.bat`。此操作可以加快启动速度。
 
-默认参数在GTX1660Ti（6G显存）上正常运行，但速度较慢。
-
 在安装vc后支持一键启动CUDA加速，运行：`run_rwkv_with_vc.bat`。强烈建议安装！！！
 #### cpp
 可使用内置脚本对torch版模型转换和量化。 运行：`cov_ggml_rwkv.bat`。
@@ -268,8 +278,6 @@ Linux直接使用wenda环境执行 `python plugins/gen_data_st.py`
 
 可以查看：[saharNooby/rwkv.cpp](https://github.com/saharNooby/rwkv.cpp)，下载其他版本，或者自行编译。
 
-#### 文字冒险游戏
-![](imgs/wzmx.png)
 ### llama
 运行：`run_llama.bat`。
 
@@ -278,5 +286,6 @@ Linux直接使用wenda环境执行 `python plugins/gen_data_st.py`
 # 基于本项目的二次开发
 ## [wenda-webui](https://github.com/AlanLee1996/wenda-webui)
 项目调用闻达的 api 接口实现类似于 new bing 的功能。 技术栈：vue3 + element-plus + ts
+![](imgs/webui.jpg)
 
 [![Star History Chart](https://api.star-history.com/svg?repos=l15y/wenda&type=Date)](https://star-history.com/#l15y/wenda&Date)
